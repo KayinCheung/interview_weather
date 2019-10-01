@@ -4,7 +4,10 @@ import constant from './Constant.js'
 import * as util from './util.js'
 import './App.css';
 import cities from './data/modifiedCityList.json'
-
+import duplicate_cities from './data/duplicateCities.json'
+import ThreeHrTable from './ThreeHrTable.js'
+import DailyRowData from './DailyRowData.js'
+import RecommendButtons from './RecommendButtons.js'
 
 class Body extends Component {
 
@@ -18,13 +21,18 @@ class Body extends Component {
         dailyData: {},
         daySelection: 0,                      //Defaults to today
         dateList:[],
+        city: '',
         country: '',
-        timezone_offset: 0
+        timezone_offset: 0,
+        recommendations: {},
+        input: '',
+        errorMsg: ''
       
 
     } 
 
     this.handleDaySelection = this.handleDaySelection.bind(this)
+    this.handleCityClick = this.handleCityClick.bind(this)
   }
 
   //Run API calls
@@ -40,19 +48,34 @@ class Body extends Component {
     })
   }
 
+  handleCityClick(city, cityid){
+    this.APICall(cityid)
+    this.setState({recommendations: {}})
+  }
+
 
   handleSearchClick(){
     document.getElementById("inputCityBtn").addEventListener("click", () => {
       let city = (document.getElementById("inputCityText").value).toLowerCase()
       //Check if city is valid, if yes, update city, else show error
-      if (!(city in cities)){
+      if (city in cities){
         //Show error
-        console.error("Invalid city")
+        let cityid = cities[city]["id"]
+        console.log(cityid)
+        this.setState({errorMsg: ''})
+        this.APICall(cityid)
         return
+      } else if (city in duplicate_cities){
+        console.log(duplicate_cities[city])
+        this.setState({
+          recommendations: duplicate_cities[city],
+          input: city,
+          errorMsg: ''
+        })
+      } else{
+        this.setState({errorMsg: 'City not found, please try again.'})
       }
-      let cityid = cities[city]["id"]
-      console.log(cityid)
-      this.APICall(cityid)
+      
     })
   }
 
@@ -66,7 +89,8 @@ class Body extends Component {
 
       this.setState({
         data: data,
-        country: data["city"]["name"]
+        city: data["city"]["name"],
+        country: data["city"]["country"]
       })
       this.processData(data)
       console.log(data)
@@ -177,30 +201,34 @@ class Body extends Component {
 
     this.setState({dailyData:dailyData})
     console.log(dailyData)
-
-
   }
 
   render(){
-  
-
 
   return (
     <div>
       <section className="section">
       
       <div className="container is-centered" style={{flex: 1}}>
-      <InputBox/>
+  
+      <InputBox dropdown={this.state.recommendations}/>
+      {this.state.errorMsg === '' ? null : <p className="is-size-7 has-text-danger">{this.state.errorMsg}</p>}
      
-      {this.state.country === '' ? '' : <Summary 
-        location={this.state.country} 
-        temp={this.state.data["list"][0]["main"]["temp"]}/>}
+      {Object.keys(this.state.recommendations).length === 0 ? null : <RecommendButtons 
+        cityInput={this.state.input} 
+        recommendations={this.state.recommendations}
+        handleCityClick={this.handleCityClick}/>}
+      
+      {this.state.city === '' ? null : <Summary 
+        city={this.state.city} 
+        temp={this.state.data["list"][0]["main"]["temp"]}
+        country={this.state.country}/>}
       
 
-        {Object.keys(this.state.dailyData).length === 0 ? '' : 
+        {Object.keys(this.state.dailyData).length === 0 ? null : 
         <DailyRowData data={this.state.dailyData} handleDaySelection={this.handleDaySelection}/>} 
         
-        {Object.keys(this.state.threeHrData).length === 0 ? '' :
+        {Object.keys(this.state.threeHrData).length === 0 ? null :
         <div>
         <strong>Forecast for {this.state.dateList[this.state.daySelection]}</strong>
         <br/><br/>
@@ -220,115 +248,31 @@ class Body extends Component {
 export default Body;
 
 
-class DailyRowData extends Component {
-  render() {
-    let data = this.props.data
-
-    return (
-      <div>
-        <hr/>
-    <nav className="level">
-
-     {Object.keys(data).map((day, i) => (
-       <div key={`daily${day}`} className="level-item has-text-centered clickableBox paddedBox" 
-        onClick={()=>{this.props.handleDaySelection(i)}}>
-       <div>
-        
-        <p className="is-size-4">
-          {constant.month_map[parseInt(day.split("-")[1])]}
-          &nbsp;{parseInt(day.split("-")[2])}
-        </p>
-        <img src={`http://openweathermap.org/img/wn/${data[day]["icon"]}@2x.png`} width="50px" height="50px" />
-        <br/>
-
-        {parseFloat(data[day]["temp_min"]).toFixed(1)} - {parseFloat(data[day]["temp_max"]).toFixed(1)}°C<br/>
-
-        {(data[day]["weather"])}<br/>
-
-        Wind: {(data[day]["wind_max"])}m/s
-        
-        </div>
-      </div>
-    ))}
-    
-    </nav>
-    <hr/>
-    </div>
-      
-    );
-  }
-}
-
-class ThreeHrTable extends Component {
-
-  render() {
-    let data = this.props.data
-    console.log(data)
-    return (
-
-      data.map(function(row,i){
-        let time = (row["time"])
-
-      return(
-        <article className="media" key={time}>
-          <figure className="media-left">
-            <p className="image is-64x64">
-            <img src={`http://openweathermap.org/img/wn/${row["icon"]}@2x.png`} width="50px" height="50px"/>
-            </p>
-          </figure>
-          <div className="media-content">
-            <div className="content">
-              
-                <strong>{time}</strong>&nbsp;&nbsp;
-                -&nbsp;&nbsp;
-                {row["weather"]}
-                <br/>
-                
-                <p className="button is-small">{parseFloat(row["temp_min"]).toFixed(1)}°C</p>
-                &nbsp;&nbsp;-&nbsp;&nbsp;
-                <p className="button is-small">{parseFloat(row["temp_max"]).toFixed(1)}°C</p><br/>
-                <p>Wind: {row["wind"]}m/s</p>
-              
-            </div>
-          </div>
-        </article>
-      )})
-    );
-  }
-}
 /*
-<td>{time}{time < 12 ? 'am' : 'pm'}</td>
-                  <td>{parseFloat(row["temp_min"]).toFixed(1)}°C</td>
-                  <td>{parseFloat(row["temp_max"]).toFixed(1)}°C</td>
-                  <td>{row["weather"]}</td>
-                  <td>{row["wind"]}m/s</td>
-                  <td>{row["deg"]}</td>
-                  
-                        <table className="table">
-          {
-            data.map(function(row,i){
-              let time = parseInt(row["time"].split(":")[0])
-              
-              return(
-                  <tr key={i} id={`date${i}`}>
-                  <td>
-                    <div>
-                    {time}{time < 12 ? 'am' : 'pm'} <img src="https://openweathermap.org/img/wn/01d@2x.png" height={10}/>
-                    {parseFloat(row["temp_min"]).toFixed(1)}°C
-                    {parseFloat(row["temp_max"]).toFixed(1)}°C
-                    {row["weather"]}
-                    {row["wind"]}m/s
-                    {row["deg"]}
-                      </div>
+      <div class="dropdown is-active">
+  <div class="dropdown-menu" id="dropdown-menu" role="menu">
+    <div class="dropdown-content">
+      <a href="#" class="dropdown-item">
+        Dropdown item
+      </a>
+      <a class="dropdown-item">
+        Other dropdown item
+      </a>
+      <a href="#" class="dropdown-item is-active">
+        Active dropdown item
+      </a>
+      <a href="#" class="dropdown-item">
+        Other dropdown item
+      </a>
+      <hr class="dropdown-divider"/>
+      <a href="#" class="dropdown-item">
+        With a divider
+      </a>
+    </div>
+  </div>
+</div>
+*/
 
-                    </td>
-                </tr>
-                )
-            })
-          }
-        </table>
-                  
-                  */
 
 
 class InputBox extends Component {
@@ -338,7 +282,7 @@ class InputBox extends Component {
         <div className="level-item">
           <div className="field has-addons">
             <p className="control">
-              <input className="input" type="text" placeholder="Input a city" id="inputCityText"/>
+              <input className="input is-fullwidth" type="text" placeholder="Input a city" id="inputCityText"/>
             </p>
             <p className="control">
               <button className="button" id="inputCityBtn">
@@ -355,9 +299,8 @@ class InputBox extends Component {
 
 
 class Summary extends Component {
-  
   render() {
-    let header = `Current Weather in ${this.props.location}`
+    let header = `Current Weather in ${this.props.city}, ${this.props.country}`
     return (
       <div>
         <p className="is-size-4 has-text-weight-semibold">{header}</p>

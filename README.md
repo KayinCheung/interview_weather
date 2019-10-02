@@ -55,10 +55,33 @@ city.list.json
 Originally an array of city objects. It was processed using these steps
 
 1) Only keep the first copy if City name AND country match.
-2) For unique city names - City name as key, object of relevant info as value.
-3) For city name with duplicates - City name as key, Object (Country as key, cityid as value.)
+2) For unique city names - Object where City name is key, object of relevant info as value.
+3) For city name with duplicates - Object where city name is key, value is Object (where country is key, cityid as value.)
 
 Goal of processing was to ensure constant time retrieval of city names and city name is a unique key.
+
+unique cities json:
+```
+{
+   "hurzuf":{
+      "id":707860,
+      "c":"ua",
+      "d":false
+   },
+}
+```
+
+duplicate cities json:
+```
+{
+   "london":{
+      "CA":6058560,
+      "GB":2643743,
+      "US":5056033
+   }
+}
+```
+
 
 ### Running the preprocessing script
 

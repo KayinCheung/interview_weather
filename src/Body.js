@@ -33,6 +33,7 @@ class Body extends Component {
 
     this.handleDaySelection = this.handleDaySelection.bind(this)
     this.handleCityClick = this.handleCityClick.bind(this)
+    this.checkValidCity = this.checkValidCity.bind(this)
   }
 
   //Run API calls
@@ -58,32 +59,36 @@ class Body extends Component {
     document.getElementById("inputCityBtn").addEventListener("click", () => {
       let city = (document.getElementById("inputCityText").value).toLowerCase()
       //Check if city is valid, if yes, update city, else show error
-      if (city in cities){
-        //Show error
-        let cityid = cities[city]["id"]
-        console.log(cityid)
-        this.setState({errorMsg: ''})
-        this.APICall(cityid)
-        return
-      } else if (city in duplicate_cities){
-        console.log(duplicate_cities[city])
-        this.setState({
-          recommendations: duplicate_cities[city],
-          input: city,
-          errorMsg: ''
-        })
-      } else{
-        this.setState({errorMsg: 'City not found, please try again.'})
-      }
+      this.checkValidCity(city)
       
     })
+  }
+
+  checkValidCity(city){
+    if (city in cities){
+      //Show error
+      let cityid = cities[city]["id"]
+      console.log(cityid)
+      this.setState({errorMsg: ''})
+      this.APICall(cityid)
+      return
+    } else if (city in duplicate_cities){
+      console.log(duplicate_cities[city])
+      this.setState({
+        recommendations: duplicate_cities[city],
+        input: city,
+        errorMsg: ''
+      })
+    } else{
+      this.setState({errorMsg: 'City not found, please try again.'})
+    }
   }
 
 
   //Runs when cityid is changed and at componentDidMount.
   APICall(cityid){
 
-    fetch(`http://api.openweathermap.org/data/2.5/forecast?id=${cityid}&appid=${constant.APIKey}&units=${constant.unit}`)
+    fetch(`https://api.openweathermap.org/data/2.5/forecast?id=${cityid}&appid=${constant.APIKey}&units=${constant.unit}`)
     .then(response => response.json())
     .then(data => {
 
@@ -211,7 +216,7 @@ class Body extends Component {
       
       <div className="container is-centered" style={{flex: 1}}>
   
-      <InputBox dropdown={this.state.recommendations}/>
+      <InputBox checkValidCity={this.checkValidCity}/>
       {this.state.errorMsg === '' ? null : <p className="is-size-7 has-text-danger">{this.state.errorMsg}</p>}
      
       {Object.keys(this.state.recommendations).length === 0 ? null : <RecommendButtons 
@@ -282,7 +287,13 @@ class InputBox extends Component {
         <div className="level-item">
           <div className="field has-addons">
             <p className="control">
-              <input className="input is-fullwidth" type="text" placeholder="Input a city" id="inputCityText"/>
+              <input className="input is-fullwidth" type="text" placeholder="Input a city" id="inputCityText"
+                 onKeyPress={(e) => {
+                   if (e.key === "Enter"){
+                      console.log(e.target.value)
+                      this.props.checkValidCity(e.target.value)
+                   }
+                 }}/>
             </p>
             <p className="control">
               <button className="button" id="inputCityBtn">

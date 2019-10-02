@@ -14,7 +14,7 @@ class ThreeHrTable extends Component {
           <article className="media" key={time}>
             <figure className="media-left">
               <p className="image is-64x64">
-              <img src={`http://openweathermap.org/img/wn/${row["icon"]}@2x.png`} width="50px" height="50px"/>
+              <img src={`https://openweathermap.org/img/wn/${row["icon"]}@2x.png`} width="50px" height="50px"/>
               </p>
             </figure>
             <div className="media-content">

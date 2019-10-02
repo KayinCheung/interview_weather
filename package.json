@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "bulma": "^0.7.5",
+    "json-loader": "^0.5.7",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "react": "^16.10.1",
@@ -31,5 +32,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "homepage": "https://interviewtest2.github.io"
 }

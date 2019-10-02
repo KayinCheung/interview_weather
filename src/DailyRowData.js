@@ -19,7 +19,7 @@ class DailyRowData extends Component {
                     {constant.month_map[parseInt(day.split("-")[1])]}
                     &nbsp;{parseInt(day.split("-")[2])}
                 </p>
-                <img src={`http://openweathermap.org/img/wn/${data[day]["icon"]}@2x.png`} width="50px" height="50px" />
+                <img src={`https://openweathermap.org/img/wn/${data[day]["icon"]}@2x.png`} width="50px" height="50px" />
                 <br/>
         
                 {parseFloat(data[day]["temp_min"]).toFixed(1)} - {parseFloat(data[day]["temp_max"]).toFixed(1)}°C<br/>
